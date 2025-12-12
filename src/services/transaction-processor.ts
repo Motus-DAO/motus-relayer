@@ -8,10 +8,10 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load contract ABI
-const contractABI = JSON.parse(
-  readFileSync(join(__dirname, '../contracts/MotusNameService.json'), 'utf-8')
-);
+// Load contract ABI - use path relative to source, not dist
+// In production, the file will be copied to dist/contracts/ by the build script
+const contractABIPath = join(__dirname, '../contracts/MotusNameService.json');
+const contractABI = JSON.parse(readFileSync(contractABIPath, 'utf-8'));
 
 export interface TransactionRequest {
   userAddress: string;
