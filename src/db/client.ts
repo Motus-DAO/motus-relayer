@@ -65,15 +65,13 @@ export async function initializeSchema() {
   try {
     const fs = await import('fs');
     const path = await import('path');
-    
-    // Try multiple possible paths (development vs production)
+
+    // Try development and production paths (no __dirname – works with ESM)
     const possiblePaths = [
-      path.join(process.cwd(), 'src', 'db', 'schema.sql'),  // Development
-      path.join(process.cwd(), 'dist', 'db', 'schema.sql'), // Production (if copied)
-      path.join(__dirname, 'schema.sql'), // Relative to compiled file
-      path.join(process.cwd(), 'db', 'schema.sql'), // Alternative
+      path.join(process.cwd(), 'src', 'db', 'schema.sql'), // Local dev
+      path.join(process.cwd(), 'dist', 'db', 'schema.sql'), // Production (copied by build)
     ];
-    
+
     let schemaPath: string | null = null;
     for (const possiblePath of possiblePaths) {
       if (fs.existsSync(possiblePath)) {
@@ -81,14 +79,14 @@ export async function initializeSchema() {
         break;
       }
     }
-    
+
     if (!schemaPath) {
       throw new Error(`Schema file not found. Tried: ${possiblePaths.join(', ')}`);
     }
-    
+
     console.log(`📄 Loading schema from: ${schemaPath}`);
     const schema = fs.readFileSync(schemaPath, 'utf-8');
-    
+
     await query(schema);
     console.log('✅ Database schema initialized');
   } catch (error) {
