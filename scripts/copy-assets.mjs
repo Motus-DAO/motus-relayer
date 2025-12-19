@@ -12,14 +12,34 @@ if (!existsSync(distContractsDir)) {
   mkdirSync(distContractsDir, { recursive: true });
 }
 
-// Copy JSON files
-const sourceFile = join(rootDir, 'src', 'contracts', 'MotusNameService.json');
-const destFile = join(distContractsDir, 'MotusNameService.json');
+// Create dist/db directory
+const distDbDir = join(rootDir, 'dist', 'db');
+if (!existsSync(distDbDir)) {
+  mkdirSync(distDbDir, { recursive: true });
+}
 
-if (existsSync(sourceFile)) {
-  copyFileSync(sourceFile, destFile);
-  console.log(`✅ Copied ${sourceFile} to ${destFile}`);
+// Copy contract JSON file
+const contractSource = join(rootDir, 'src', 'contracts', 'MotusNameService.json');
+const contractDest = join(distContractsDir, 'MotusNameService.json');
+
+if (existsSync(contractSource)) {
+  copyFileSync(contractSource, contractDest);
+  console.log(`✅ Copied ${contractSource} to ${contractDest}`);
 } else {
-  console.error(`❌ Source file not found: ${sourceFile}`);
+  console.error(`❌ Source file not found: ${contractSource}`);
   process.exit(1);
 }
+
+// Copy schema.sql file
+const schemaSource = join(rootDir, 'src', 'db', 'schema.sql');
+const schemaDest = join(distDbDir, 'schema.sql');
+
+if (existsSync(schemaSource)) {
+  copyFileSync(schemaSource, schemaDest);
+  console.log(`✅ Copied ${schemaSource} to ${schemaDest}`);
+} else {
+  console.warn(`⚠️  Schema file not found: ${schemaSource} (this is OK if migrations are run separately)`);
+}
+
+
+

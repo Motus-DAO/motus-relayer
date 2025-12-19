@@ -5,13 +5,33 @@ dotenv.config();
 
 const { Pool } = pg;
 
-// Database connection pool
-export const pool = new Pool({
+// Get database configuration from environment variables
+const dbConfig = {
   host: process.env.DB_HOST || 'localhost',
   port: parseInt(process.env.DB_PORT || '5432'),
   database: process.env.DB_NAME || 'motus_relayer',
   user: process.env.DB_USER || 'postgres',
   password: process.env.DB_PASSWORD || 'postgres',
+};
+
+// Log database configuration (without password) for debugging
+console.log('📊 Database Configuration:', {
+  host: dbConfig.host,
+  port: dbConfig.port,
+  database: dbConfig.database,
+  user: dbConfig.user,
+  hasPassword: !!dbConfig.password,
+});
+
+// Warn if using defaults (likely means env vars not set)
+if (dbConfig.host === 'localhost' && process.env.NODE_ENV === 'production') {
+  console.warn('⚠️  WARNING: Using default DB_HOST=localhost in production!');
+  console.warn('⚠️  Make sure DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD are set in Railway environment variables.');
+}
+
+// Database connection pool
+export const pool = new Pool({
+  ...dbConfig,
   max: 20, // Maximum number of clients in the pool
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
@@ -45,7 +65,28 @@ export async function initializeSchema() {
   try {
     const fs = await import('fs');
     const path = await import('path');
-    const schemaPath = path.join(process.cwd(), 'src', 'db', 'schema.sql');
+    
+    // Try multiple possible paths (development vs production)
+    const possiblePaths = [
+      path.join(process.cwd(), 'src', 'db', 'schema.sql'),  // Development
+      path.join(process.cwd(), 'dist', 'db', 'schema.sql'), // Production (if copied)
+      path.join(__dirname, 'schema.sql'), // Relative to compiled file
+      path.join(process.cwd(), 'db', 'schema.sql'), // Alternative
+    ];
+    
+    let schemaPath: string | null = null;
+    for (const possiblePath of possiblePaths) {
+      if (fs.existsSync(possiblePath)) {
+        schemaPath = possiblePath;
+        break;
+      }
+    }
+    
+    if (!schemaPath) {
+      throw new Error(`Schema file not found. Tried: ${possiblePaths.join(', ')}`);
+    }
+    
+    console.log(`📄 Loading schema from: ${schemaPath}`);
     const schema = fs.readFileSync(schemaPath, 'utf-8');
     
     await query(schema);
