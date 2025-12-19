@@ -14,6 +14,14 @@ const dbConfig = {
   password: process.env.DB_PASSWORD || 'postgres',
 };
 
+// Log raw environment variables for debugging
+console.log('🔍 Environment Variables Check:');
+console.log('  DB_HOST:', process.env.DB_HOST ? `"${process.env.DB_HOST}"` : '❌ NOT SET (using default: localhost)');
+console.log('  DB_PORT:', process.env.DB_PORT ? `"${process.env.DB_PORT}"` : '❌ NOT SET (using default: 5432)');
+console.log('  DB_NAME:', process.env.DB_NAME ? `"${process.env.DB_NAME}"` : '❌ NOT SET (using default: motus_relayer)');
+console.log('  DB_USER:', process.env.DB_USER ? `"${process.env.DB_USER}"` : '❌ NOT SET (using default: postgres)');
+console.log('  DB_PASSWORD:', process.env.DB_PASSWORD ? '✅ SET' : '❌ NOT SET (using default: postgres)');
+
 // Log database configuration (without password) for debugging
 console.log('📊 Database Configuration:', {
   host: dbConfig.host,
@@ -24,9 +32,11 @@ console.log('📊 Database Configuration:', {
 });
 
 // Warn if using defaults (likely means env vars not set)
-if (dbConfig.host === 'localhost' && process.env.NODE_ENV === 'production') {
-  console.warn('⚠️  WARNING: Using default DB_HOST=localhost in production!');
-  console.warn('⚠️  Make sure DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD are set in Railway environment variables.');
+if (dbConfig.host === 'localhost') {
+  console.error('❌ ERROR: DB_HOST is "localhost" - this will NOT work in Railway!');
+  console.error('❌ You MUST set DB_HOST, DB_PORT, DB_NAME, DB_USER, and DB_PASSWORD in Railway!');
+  console.error('❌ Go to: Railway → motus-relayer service → Variables tab');
+  console.error('❌ Copy values from: Railway → Postgres service → Variables tab');
 }
 
 // Database connection pool
